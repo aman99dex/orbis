@@ -34,7 +34,7 @@ func TestRecallServerMode(t *testing.T) {
 	if isErr || out != "Aman prefers Go for local tools." {
 		t.Fatalf("recall = %q (err=%v)", out, isErr)
 	}
-	if got["user_id"] != "aman" || got["namespace"] != "orbis" || got["rewrite"] != false {
+	if got["user_id"] != "aman" || got["namespace"] != "orbis" || got["rewrite"] != true {
 		t.Fatalf("request body = %v", got)
 	}
 	got = nil
@@ -57,7 +57,8 @@ func TestFakeAgenticMemory(t *testing.T) {
 		fmt.Fprintln(os.Stderr, "Traceback: ANTHROPIC_API_KEY missing")
 		os.Exit(3)
 	}
-	fmt.Printf("%s|%s", strings.Join(args, "|"), os.Getenv("PYTHONIOENCODING")) // echo what we were given
+	// Echo what we were given over two CRLF lines, like older agentic-memory builds on Windows.
+	fmt.Printf("%s\r\n%s\r\n", strings.Join(args, "|"), os.Getenv("PYTHONIOENCODING"))
 	os.Exit(0)
 }
 
@@ -67,10 +68,14 @@ func TestRecallLocalMode(t *testing.T) {
 	cs, _ := connectWith(t, mem)
 	cwd, _ := os.Getwd()
 	out, isErr := call(t, cs, "orbis_recall", map[string]any{"query": "what ü did we decide"})
-	if want := "recall|what ü did we decide|--project|" + cwd + "|utf-8"; isErr || out != want {
-		t.Fatalf("local recall = %q, want %q", out, want)
+	if want := "recall|what ü did we decide|--project|" + cwd + "\nutf-8"; isErr || out != want {
+		t.Fatalf("local recall = %q, want %q (CRLF must become LF)", out, want)
 	}
-	if txt, _ := mem.Context(t.Context(), ""); txt != "context|--project||utf-8" {
+	out, _ = call(t, cs, "orbis_recall", map[string]any{"query": "q", "fast": true})
+	if want := "recall|q|--project|" + cwd + "|--no-rewrite\nutf-8"; out != want {
+		t.Fatalf("fast recall = %q, want %q", out, want)
+	}
+	if txt, _ := mem.Context(t.Context(), ""); txt != "context|--project|\nutf-8" {
 		t.Fatalf("local context = %q", txt)
 	}
 	failing := &Memory{Cmd: []string{os.Args[0], "-test.run=^TestFakeAgenticMemory$", "--", "fail"}}
@@ -87,8 +92,14 @@ func TestMemoryFromEnv(t *testing.T) {
 		t.Fatalf("ORBIS_MEMORY_CMD → %+v", m)
 	}
 	t.Setenv("MEMORY_URL", "http://127.0.0.1:8000/")
-	if m := MemoryFromEnv(); m == nil || m.Mode() != "server" || m.URL != "http://127.0.0.1:8000" {
-		t.Fatalf("MEMORY_URL → %+v", m)
+	t.Setenv("MEMORY_USER_ID", "")
+	t.Setenv("MEMORY_USER", "")
+	if m := MemoryFromEnv(); m == nil || m.Mode() != "server" || m.URL != "http://127.0.0.1:8000" || m.User != "me" {
+		t.Fatalf("MEMORY_URL → %+v (user should default to Agentic Memory's \"me\")", m)
+	}
+	t.Setenv("MEMORY_USER_ID", "aman")
+	if m := MemoryFromEnv(); m.User != "aman" {
+		t.Fatalf("MEMORY_USER_ID ignored: %+v", m)
 	}
 }
 

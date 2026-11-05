@@ -284,7 +284,7 @@ func (a *App) MemoryMode() string {
 	return a.mem.Mode()
 }
 
-// MemoryContext is the briefing a new agent session would get (user-wide).
+// MemoryContext is the briefing a new agent session would get (no project selected).
 func (a *App) MemoryContext() (string, error) {
 	if a.mem == nil {
 		return "", fmt.Errorf("Agentic Memory isn't set up")
@@ -292,7 +292,7 @@ func (a *App) MemoryContext() (string, error) {
 	return a.mem.Context(a.ctx, "")
 }
 
-// Recall searches user-wide memories, the same way orbis_recall does for agents.
+// Recall searches memories across every project (an empty project means all of them).
 func (a *App) Recall(q string) (string, error) {
 	if a.mem == nil {
 		return "", fmt.Errorf("Agentic Memory isn't set up")

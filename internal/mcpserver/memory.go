@@ -2,6 +2,7 @@ package mcpserver
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"os/user"
 	"strings"
 	"time"
 
@@ -31,22 +31,17 @@ type Memory struct {
 // MemoryFromEnv picks the mode from the environment, or returns nil when
 // neither a server nor the CLI is available (orbis_recall stays unregistered).
 //
-//	MEMORY_URL, MEMORY_API_KEY (or API_KEY), MEMORY_USER   → server mode
+//	MEMORY_URL, MEMORY_API_KEY (or API_KEY), MEMORY_USER_ID → server mode
 //	ORBIS_MEMORY_CMD="uv run --directory C:\src\Agentic_Memory agentic-memory" → local mode
-//	`agentic-memory` on PATH                                → local mode
+//	`agentic-memory` on PATH                                  → local mode
 func MemoryFromEnv() *Memory {
 	if u := os.Getenv("MEMORY_URL"); u != "" {
 		key := os.Getenv("MEMORY_API_KEY")
 		if key == "" {
 			key = os.Getenv("API_KEY")
 		}
-		who := os.Getenv("MEMORY_USER")
-		if who == "" {
-			who = "default"
-			if cu, err := user.Current(); err == nil {
-				who = cu.Username
-			}
-		}
+		// Same variable and default as Agentic Memory itself, so both name the same user.
+		who := cmp.Or(os.Getenv("MEMORY_USER_ID"), os.Getenv("MEMORY_USER"), "me")
 		return &Memory{URL: strings.TrimRight(u, "/"), Key: key, User: who, HTTP: &http.Client{Timeout: 30 * time.Second}}
 	}
 	if c := os.Getenv("ORBIS_MEMORY_CMD"); c != "" {
@@ -68,16 +63,21 @@ func (m *Memory) Mode() string {
 	return "local"
 }
 
-// Recall searches memories. project is a folder in local mode (empty = user-wide
-// only) or a namespace in server mode.
-func (m *Memory) Recall(ctx context.Context, query, project string, budget int, rewrite bool) (string, error) {
+// Recall searches memories. project is a folder in local mode or a namespace in
+// server mode; empty searches every project. fast skips the memory service's LLM
+// query rewrite: ~2 s quicker, but past-session summaries are then never searched.
+func (m *Memory) Recall(ctx context.Context, query, project string, budget int, fast bool) (string, error) {
 	if m.URL == "" {
-		return m.run(ctx, "recall", query, "--project", project)
+		args := []string{"recall", query, "--project", project}
+		if fast {
+			args = append(args, "--no-rewrite")
+		}
+		return m.run(ctx, args...)
 	}
 	if budget <= 0 {
 		budget = 1500
 	}
-	body := map[string]any{"user_id": m.User, "query": query, "budget": budget, "rewrite": rewrite}
+	body := map[string]any{"user_id": m.User, "query": query, "budget": budget, "rewrite": !fast}
 	if project != "" {
 		body["namespace"] = project
 	}
@@ -139,7 +139,8 @@ func (m *Memory) run(ctx context.Context, args ...string) (string, error) {
 		}
 		return "", fmt.Errorf("agentic-memory %s failed: %v: %s", args[0], err, msg)
 	}
-	return orNothing(strings.TrimSpace(stdout.String())), nil
+	// Older agentic-memory builds wrote CRLF on Windows, which doubled every line.
+	return orNothing(strings.TrimSpace(strings.ReplaceAll(stdout.String(), "\r\n", "\n"))), nil
 }
 
 func orNothing(s string) string {
@@ -180,7 +181,7 @@ type recallIn struct {
 	Query   string `json:"query" jsonschema:"what you want to remember about the user or past work"`
 	Project string `json:"project,omitempty" jsonschema:"local: project folder (default: the folder you run in); server: namespace"`
 	Budget  int    `json:"budget,omitempty" jsonschema:"server mode: max tokens of recalled text, default 1500"`
-	Rewrite bool   `json:"rewrite,omitempty" jsonschema:"server mode: let the memory service rewrite the query with its LLM"`
+	Fast    bool   `json:"fast,omitempty" jsonschema:"skip the LLM query rewrite: about 2 s faster, but past-session summaries are not searched; leave off for 'what did we do' questions"`
 }
 
 func (m *Memory) register(s *mcp.Server) {
@@ -191,7 +192,7 @@ func (m *Memory) register(s *mcp.Server) {
 			if project == "" && m.URL == "" {
 				project, _ = os.Getwd() // the agent starts us in its project folder
 			}
-			text, err := m.Recall(ctx, in.Query, project, in.Budget, in.Rewrite)
+			text, err := m.Recall(ctx, in.Query, project, in.Budget, in.Fast)
 			if err != nil {
 				return reply(nil, err)
 			}

@@ -53,7 +53,7 @@ Orbis holds your files; Agentic Memory remembers facts and past sessions. With i
 - **Local, no server:** install the `agentic-memory` CLI (Orbis finds it on `PATH`), or point Orbis at a
   checkout: `ORBIS_MEMORY_CMD="uv run --directory C:\path\to\Agentic_Memory agentic-memory"`. Orbis
   passes the agent's project folder, so project memories come back along with user-wide ones.
-- **Server:** `MEMORY_URL`, `MEMORY_API_KEY`, `MEMORY_USER` → `POST /memories:search` and `/memories:context`.
+- **Server:** `MEMORY_URL`, `MEMORY_API_KEY`, `MEMORY_USER_ID` (default `me`, same as Agentic Memory) → `POST /memories:search` and `/memories:context`.
 
 For the app, set the variable as a user environment variable; for agents, put it in the MCP config
 (`claude mcp add orbis -e ORBIS_MEMORY_CMD=... -- orbis.exe mcp`).
