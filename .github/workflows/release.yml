@@ -1,0 +1,60 @@
+name: release
+
+# Builds Windows and macOS binaries on every tag (v*) and on manual runs.
+# Unsigned for v1 (SPEC decision 4): macOS users right-click → Open the first time.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+      - run: go test -short ./internal/...
+
+  build:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows/amd64
+            out: orbis.exe
+          - os: macos-latest
+            platform: darwin/universal
+            out: Orbis.app
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
+      - name: Build
+        shell: bash
+        run: wails build -clean -trimpath -platform ${{ matrix.platform }} -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}"
+      - name: Package
+        shell: bash
+        run: |
+          cd build/bin
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            ditto -c -k --keepParent Orbis.app ../../orbis-macos-universal.zip
+          else
+            7z a ../../orbis-windows-amd64.zip orbis.exe
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orbis-${{ runner.os }}
+          path: orbis-*.zip
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: orbis-*.zip

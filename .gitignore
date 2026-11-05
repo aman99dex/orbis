@@ -1,0 +1,9 @@
+bin/
+*.exe
+*.test
+.orbis/
+frontend/node_modules/
+frontend/dist/*
+build/bin/
+!frontend/dist/.gitkeep
+frontend/package.json.md5

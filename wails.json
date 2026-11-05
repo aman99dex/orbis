@@ -1,0 +1,11 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "Orbis",
+  "outputfilename": "orbis",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": { "name": "Aman Gupta" },
+  "info": { "productName": "Orbis", "productVersion": "0.1.0", "comments": "Local-first context for humans and coding agents" }
+}

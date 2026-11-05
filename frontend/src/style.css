@@ -1,0 +1,67 @@
+/* Orbis tokens: star-chart ink on paper (light), chart on night sky (dark).
+   Brass means exactly one thing: agent-written, or in focus. */
+:root {
+  --paper: #f2f3ee;
+  --paper-2: #e8eae3;
+  --ink: #1c2333;
+  --ink-2: #4a5263;
+  --ink-3: #7b8292;
+  --rule: #c9cdc4;
+  --brass: #8a5a12;
+  --brass-soft: #8a5a1222;
+  --k-note: #2f5d8a;
+  --k-page: #3d7a5c;
+  --k-artifact: #7a4f8f;
+  --k-pdf: #a3423a;
+  --k-image: #3f7f86;
+  --k-file: #6b6f78;
+  --k-hub: #9aa0aa;
+  --danger: #a3423a;
+  --ui: "Segoe UI Variable Text", "Segoe UI", -apple-system, "SF Pro Text", system-ui, sans-serif;
+  --read: "Literata Variable", Georgia, serif;
+  --mono: "Cascadia Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 40px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #121829; --paper-2: #182038; --ink: #d9dee8; --ink-2: #a9b1c2; --ink-3: #6f7891; --rule: #2a3350; --brass: #d3a24a; --brass-soft: #d3a24a26; --k-note: #7fa8d6; --k-page: #7fc0a0; --k-artifact: #b996cc; --k-pdf: #d98b82; --k-image: #7fc4cb; --k-file: #9aa0aa; --k-hub: #59617a; --danger: #e0877e; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --paper: #121829; --paper-2: #182038; --ink: #d9dee8; --ink-2: #a9b1c2; --ink-3: #6f7891; --rule: #2a3350; --brass: #d3a24a; --brass-soft: #d3a24a26; --k-note: #7fa8d6; --k-page: #7fc0a0; --k-artifact: #b996cc; --k-pdf: #d98b82; --k-image: #7fc4cb; --k-file: #9aa0aa; --k-hub: #59617a; --danger: #e0877e; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html, body, #app { height: 100%; margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 13px/1.45 var(--ui); -webkit-font-smoothing: antialiased; overflow: hidden; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 1px solid var(--rule); border-radius: 6px; padding: 3px 10px; }
+button:hover { border-color: var(--ink-3); }
+button.quiet { border-color: transparent; }
+button.quiet:hover { border-color: var(--rule); }
+button[aria-pressed="true"] { border-color: var(--ink); }
+:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
+input, textarea { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 8px; width: 100%; }
+input:focus, textarea:focus { border-color: var(--ink-3); outline: none; }
+kbd { font: 11px var(--mono); color: var(--ink-3); }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.dot.agent { background: var(--brass); }
+.dot.human { border: 1.5px solid var(--ink-3); }
+.muted { color: var(--ink-3); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Reading surface for rendered Markdown */
+.prose { font: 17px/1.62 var(--read); max-width: 68ch; margin: 0 auto; padding: var(--s6) var(--s5) 120px; }
+.prose h1, .prose h2, .prose h3 { font-weight: 600; line-height: 1.2; margin: 1.6em 0 .5em; }
+.prose h1 { font-size: 1.9em; margin-top: 0; letter-spacing: -.01em; }
+.prose h2 { font-size: 1.35em; }
+.prose h3 { font-size: 1.1em; }
+.prose p, .prose ul, .prose ol, .prose blockquote, .prose pre, .prose table { margin: 0 0 1em; }
+.prose a { color: var(--k-note); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.prose a.wiki { color: var(--brass); }
+.prose a.missing { color: var(--ink-3); text-decoration-style: dotted; }
+.prose code { font: .86em var(--mono); background: var(--paper-2); padding: 1px 4px; border-radius: 4px; }
+.prose pre { background: var(--paper-2); padding: var(--s3) var(--s4); border-radius: 8px; overflow-x: auto; }
+.prose pre code { background: none; padding: 0; }
+.prose blockquote { border-left: 3px solid var(--rule); padding-left: var(--s4); color: var(--ink-2); }
+.prose img { max-width: 100%; max-height: 420px; border-radius: 6px; }
+.prose table { border-collapse: collapse; font: 14px/1.4 var(--ui); }
+.prose th, .prose td { border-bottom: 1px solid var(--rule); padding: 6px 10px; text-align: left; }
+.prose hr { border: 0; border-top: 1px solid var(--rule); margin: 2em 0; }
