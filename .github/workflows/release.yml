@@ -1,9 +1,12 @@
 name: release
 
-# Builds Windows and macOS binaries on every tag (v*) and on manual runs.
-# Unsigned for v1 (SPEC decision 4): macOS users right-click → Open the first time.
+# Tests on every push to main. On a v* tag (or a manual run) it also builds
+# Windows (installer + portable exe) and macOS, and a tag publishes them as a
+# GitHub Release with fixed file names, so /releases/latest/download/<name> always works.
+# Unsigned for v1 (SPEC decision 4): SmartScreen / Gatekeeper warn on first launch.
 on:
   push:
+    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
 
@@ -23,16 +26,11 @@ jobs:
       - run: go test -short ./internal/...
 
   build:
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     needs: test
     strategy:
       matrix:
-        include:
-          - os: windows-latest
-            platform: windows/amd64
-            out: orbis.exe
-          - os: macos-latest
-            platform: darwin/universal
-            out: Orbis.app
+        os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -41,23 +39,60 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
-      - name: Build
-        shell: bash
-        run: wails build -clean -trimpath -platform ${{ matrix.platform }} -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}"
-      - name: Package
+      - name: Version
         shell: bash
         run: |
-          cd build/bin
-          if [ "${{ runner.os }}" = "macOS" ]; then
-            ditto -c -k --keepParent Orbis.app ../../orbis-macos-universal.zip
-          else
-            7z a ../../orbis-windows-amd64.zip orbis.exe
-          fi
+          v="${GITHUB_REF_NAME#v}"
+          [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || v="0.0.0"
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+          # installer metadata reads productVersion from wails.json
+          sed -i.bak "s/\"productVersion\": \"[^\"]*\"/\"productVersion\": \"$v\"/" wails.json
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          choco install nsis -y --no-progress
+          export PATH="$PATH:/c/Program Files (x86)/NSIS"
+          wails build -clean -trimpath -nsis -platform windows/amd64 -ldflags "-s -w -X main.version=$VERSION"
+          mkdir -p dist
+          cp build/bin/orbis.exe dist/orbis-windows-x64.exe
+          cp build/bin/*-installer.exe dist/Orbis-Setup-windows-x64.exe
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          wails build -clean -trimpath -platform darwin/universal -ldflags "-s -w -X main.version=$VERSION"
+          mkdir -p dist
+          ditto -c -k --keepParent build/bin/Orbis.app dist/Orbis-macos-universal.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: orbis-${{ runner.os }}
-          path: orbis-*.zip
-      - if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+          name: dist-${{ runner.os }}
+          path: dist/*
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { pattern: dist-*, merge-multiple: true, path: dist }
+      - run: cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
         with:
-          files: orbis-*.zip
+          files: dist/*
+          make_latest: true
+          generate_release_notes: true
+          body: |
+            ## Download
+
+            | Your computer | File |
+            |---|---|
+            | Windows 10/11 (installer, recommended) | **Orbis-Setup-windows-x64.exe**: per-user install, no admin needed, adds Start menu + desktop shortcuts and an uninstaller |
+            | Windows (portable, no install) | **orbis-windows-x64.exe**: run it from anywhere |
+            | macOS 11+ (Apple Silicon and Intel) | **Orbis-macos-universal.zip**: unzip, drag Orbis.app to Applications |
+
+            These builds aren't code-signed yet, so the first launch shows a warning:
+            - **Windows SmartScreen**: click *More info* → *Run anyway*.
+            - **macOS**: right-click Orbis.app → *Open* → *Open*. Or run `xattr -dr com.apple.quarantine /Applications/Orbis.app`.
+
+            Connect Claude Code after installing: the app's start screen shows the exact `claude mcp add` command.
+            Checksums are in `SHA256SUMS.txt`.

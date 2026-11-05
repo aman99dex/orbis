@@ -5,6 +5,17 @@ agent artifacts, PDFs and images in a plain folder, lets you read, edit and pres
 connect, and lets any MCP-capable agent (Claude Code, Cursor, …) search and write to the same place.
 Nothing leaves your machine.
 
+## Download
+
+| Your computer | Download |
+|---|---|
+| **Windows 10/11** (installer, recommended) | [Orbis-Setup-windows-x64.exe](https://github.com/aman99dex/orbis/releases/latest/download/Orbis-Setup-windows-x64.exe): per-user install, no admin, Start menu + desktop shortcuts, uninstaller |
+| **Windows** (portable, no install) | [orbis-windows-x64.exe](https://github.com/aman99dex/orbis/releases/latest/download/orbis-windows-x64.exe) |
+| **macOS 11+** (Apple Silicon and Intel) | [Orbis-macos-universal.zip](https://github.com/aman99dex/orbis/releases/latest/download/Orbis-macos-universal.zip): unzip, drag Orbis.app to Applications |
+
+All versions and checksums: [Releases](https://github.com/aman99dex/orbis/releases). The builds aren't code-signed yet, so
+the first launch warns you. On Windows click *More info* → *Run anyway*. On macOS right-click Orbis.app → *Open* → *Open*.
+
 ## Use it
 
 ```
@@ -76,4 +87,4 @@ ORBIS_BIN=build/bin/orbis.exe go test . -run TestStdioSmoke   # prove the GUI bu
 ```
 
 Spec and decisions: [SPEC.md](SPEC.md). Task log: [tasks/todo.md](tasks/todo.md).
-Releases: push a `v*` tag; [.github/workflows/release.yml](.github/workflows/release.yml) builds Windows and macOS.
+Releases: `git tag vX.Y.Z && git push origin vX.Y.Z` → [.github/workflows/release.yml](.github/workflows/release.yml) builds the Windows installer, portable exe and macOS app, and publishes them with fixed names so the Download links above always point at the newest.
