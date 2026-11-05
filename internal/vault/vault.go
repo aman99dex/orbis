@@ -76,7 +76,9 @@ func (v *Vault) Resolve(rel string) (string, error) {
 	if rel == "" || filepath.IsAbs(rel) || filepath.VolumeName(rel) != "" || strings.ContainsRune(rel, ':') {
 		return "", fmt.Errorf("invalid path %q", rel)
 	}
-	slash := filepath.ToSlash(rel)
+	// Backslash is a separator on every OS here: a vault zipped on macOS must
+	// not carry a "..\x" name that escapes when opened on Windows.
+	slash := strings.ReplaceAll(rel, `\`, "/")
 	if strings.HasPrefix(slash, "/") || slices.Contains(strings.Split(slash, "/"), "..") {
 		return "", fmt.Errorf("invalid path %q", rel)
 	}
