@@ -20,9 +20,13 @@ export function render(body: string): string {
   return md.render(wikify(body))
 }
 
-/** Split Markdown into slides on lines that are exactly `---`. */
+/** Split Markdown into slides on lines that are exactly `---`; a note without
+ *  any is split before each `#`/`##` heading instead, so every note presents. */
 export function slides(body: string): string[] {
-  return stripFrontmatter(body).split(/\r?\n---[ \t]*\r?\n/).map((s) => render(s.trim())).filter((s) => s.trim() !== '')
+  const text = stripFrontmatter(body)
+  let parts = text.split(/\r?\n---[ \t]*\r?\n/)
+  if (parts.length === 1) parts = text.split(/\r?\n(?=#{1,2}\s)/)
+  return parts.map((s) => s.trim()).filter(Boolean).map(render)
 }
 
 /** Resolve a link found in `from` to a vault path, or null if it leaves the vault. */

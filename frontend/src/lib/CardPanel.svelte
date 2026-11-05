@@ -79,7 +79,7 @@
 </aside>
 
 <style>
-  aside { width: 300px; border-left: 1px solid var(--rule); padding: var(--s4); overflow-y: auto; display: flex; flex-direction: column; gap: var(--s4); }
+  aside { width: 300px; min-height: 0; border-left: 1px solid var(--rule); padding: var(--s4); overflow-y: auto; display: flex; flex-direction: column; gap: var(--s4); }
   form { display: flex; flex-direction: column; gap: var(--s3); }
   label { display: flex; flex-direction: column; gap: var(--s1); font-weight: 600; color: var(--ink-2); font-size: 12px; }
   label .muted { font-weight: 400; display: inline; }

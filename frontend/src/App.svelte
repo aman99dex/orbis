@@ -175,8 +175,9 @@
 {/if}
 
 <style>
-  .shell { display: grid; grid-template-columns: 264px minmax(0, 1fr) auto; height: 100vh; }
-  main { display: flex; flex-direction: column; min-width: 0; border-left: 1px solid var(--rule); }
+  /* One row pinned to the window height: without it the row grows to the content and nothing can scroll. */
+  .shell { display: grid; grid-template-columns: 264px minmax(0, 1fr) auto; grid-template-rows: minmax(0, 1fr); height: 100vh; overflow: hidden; }
+  main { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--rule); }
   header { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s3); border-bottom: 1px solid var(--rule); min-height: 41px; }
   .crumb { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px var(--mono); color: var(--ink-2); }
   nav { display: flex; gap: 2px; }

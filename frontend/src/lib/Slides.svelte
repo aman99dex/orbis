@@ -46,7 +46,7 @@
 </div>
 
 <style>
-  .deck { position: fixed; inset: 0; z-index: 10; background: var(--paper); display: grid; place-items: center; }
+  .deck { position: fixed; inset: 0; z-index: 10; background: var(--paper); display: grid; place-items: center; overflow-y: auto; }
   iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
   .slide { font-size: clamp(20px, 2.4vw, 34px); max-width: 30em; width: 100%; padding: 6vh 6vw; }
   .slide :global(h1) { font-size: 2em; }
