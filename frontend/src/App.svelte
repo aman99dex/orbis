@@ -9,8 +9,9 @@
   import CardPanel from './lib/CardPanel.svelte'
   import Graph from './lib/Graph.svelte'
   import Slides from './lib/Slides.svelte'
+  import Memory from './lib/Memory.svelte'
 
-  type Mode = 'view' | 'edit' | 'orbit'
+  type Mode = 'view' | 'edit' | 'orbit' | 'memory'
   let cards = $state<vault.Card[]>([])
   let current = $state<string | null>(null)
   let doc = $state<main.Doc | null>(null)
@@ -19,6 +20,7 @@
   let error = $state('')
   let notice = $state('')
   let agentCmd = $state('')
+  let memoryMode = $state('')
   let theme = $state(readTheme())
   let searchEl = $state<HTMLInputElement>()
 
@@ -91,6 +93,7 @@
   onMount(() => {
     refresh()
     api.AgentCommand().then((c) => (agentCmd = c))
+    api.MemoryMode().then((m) => (memoryMode = m))
     const off = EventsOn('vault:changed', async (paths: string[]) => {
       await refresh()
       if (current && paths.includes(current)) {
@@ -118,16 +121,17 @@
 
   <main>
     <header>
-      {#if doc && mode !== 'orbit'}
+      {#if doc && mode !== 'orbit' && mode !== 'memory'}
         <span class="crumb" title={doc.card.path}>{doc.card.path}</span>
       {:else}
-        <span class="crumb muted">{mode === 'orbit' ? 'Orbit' : 'Orbis'}</span>
+        <span class="crumb muted">{mode === 'orbit' ? 'Orbit' : mode === 'memory' ? 'Memory' : 'Orbis'}</span>
       {/if}
       <nav aria-label="Mode">
         <button class="quiet" aria-pressed={mode === 'view'} disabled={!doc} onclick={() => (mode = 'view')}>Read</button>
         <button class="quiet" aria-pressed={mode === 'edit'} disabled={!doc?.text} onclick={() => (mode = 'edit')} title="Ctrl+E">Edit</button>
         <button class="quiet" disabled={!canPresent} onclick={() => (presenting = true)} title="F5">Present</button>
         <button class="quiet" aria-pressed={mode === 'orbit'} onclick={() => (mode = mode === 'orbit' ? 'view' : 'orbit')} title="Ctrl+G">Orbit</button>
+        {#if memoryMode}<button class="quiet" aria-pressed={mode === 'memory'} onclick={() => (mode = mode === 'memory' ? 'view' : 'memory')}>Memory</button>{/if}
         <button class="quiet" title="Switch theme" aria-label="Switch theme"
           onclick={() => (theme = theme === '' ? 'dark' : theme === 'dark' ? 'light' : '')}>{theme === '' ? 'Auto' : theme === 'dark' ? 'Dark' : 'Light'}</button>
       </nav>
@@ -136,7 +140,9 @@
     {#if notice}<p class="notice" role="status">{notice} <button class="quiet" onclick={() => (notice = '')}>Dismiss</button></p>{/if}
 
     <section class="stage">
-      {#if mode === 'orbit'}
+      {#if mode === 'memory'}
+        <Memory mode={memoryMode} />
+      {:else if mode === 'orbit'}
         <Graph focus={current} onopen={(p) => open(p, 'view')} />
       {:else if doc && mode === 'edit'}
         {#key doc.card.path}
@@ -164,7 +170,7 @@
     </section>
   </main>
 
-  {#if doc && mode !== 'orbit'}
+  {#if doc && mode !== 'orbit' && mode !== 'memory'}
     <CardPanel {doc} onopen={(p) => open(p, 'view')} onsaved={async () => { await refresh(); if (current) doc = await api.Open(current) }}
       ondelete={remove} onerror={(e) => (error = e)} />
   {/if}

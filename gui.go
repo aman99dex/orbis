@@ -18,6 +18,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"orbis/internal/index"
+	"orbis/internal/mcpserver"
 	"orbis/internal/portable"
 	"orbis/internal/vault"
 )
@@ -30,6 +31,7 @@ type App struct {
 	ctx context.Context
 	ix  *index.Index
 	v   *vault.Vault
+	mem *mcpserver.Memory // nil when Agentic Memory is not set up
 }
 
 func runGUI(root string) error {
@@ -38,7 +40,7 @@ func runGUI(root string) error {
 		return err
 	}
 	defer ix.Close()
-	app := &App{ix: ix, v: ix.V}
+	app := &App{ix: ix, v: ix.V, mem: mcpserver.MemoryFromEnv()}
 	return wails.Run(&options.App{
 		Title:     "Orbis",
 		Width:     1320,
@@ -272,4 +274,28 @@ func (a *App) ImportZip() (*portable.Result, error) {
 	}
 	_, err = a.ix.Sync()
 	return &res, err
+}
+
+// MemoryMode is "local", "server", or "" when Agentic Memory isn't set up.
+func (a *App) MemoryMode() string {
+	if a.mem == nil {
+		return ""
+	}
+	return a.mem.Mode()
+}
+
+// MemoryContext is the briefing a new agent session would get (user-wide).
+func (a *App) MemoryContext() (string, error) {
+	if a.mem == nil {
+		return "", fmt.Errorf("Agentic Memory isn't set up")
+	}
+	return a.mem.Context(a.ctx, "")
+}
+
+// Recall searches user-wide memories, the same way orbis_recall does for agents.
+func (a *App) Recall(q string) (string, error) {
+	if a.mem == nil {
+		return "", fmt.Errorf("Agentic Memory isn't set up")
+	}
+	return a.mem.Recall(a.ctx, q, "", 0, false)
 }

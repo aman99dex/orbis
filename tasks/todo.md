@@ -18,7 +18,7 @@ Order follows SPEC.md build order. Each task: tests green (`go test ./...`) befo
 
 ## Slice 3 — extras + ship
 - [x] **memory-bridge**: `orbis_recall` → Agentic_Memory REST when configured
-- [~] **release** (workflow written, never run — no GitHub remote yet): GitHub Actions windows + macOS builds; size/memory check against success criteria
+- [~] **release** (repo aman99dex/orbis; first CI run caught a Linux-only path bug, fixed): GitHub Actions windows + macOS builds; size/memory check against success criteria
 
 ## Log
 - 2026-11-04 Slice 1 done: `go test ./...` green (incl. stdio smoke). 10k sync 2.9 s, search p95 5 ms, 10 cards ≈ 960 tokens. Dogfooded with real `claude -p` + temp `--mcp-config`: write note + page, search, neighbors all correct. Binary 12.9 MB (no UI yet).
@@ -30,3 +30,5 @@ Order follows SPEC.md build order. Each task: tests green (`go test ./...`) befo
 - [ ] macOS build never run (needs a Mac or CI). Release workflow never run.
 - [ ] Live check: Claude writes via MCP while app open → shows within 1 s (watcher test proves <3 s at the index level; UI event wiring not observed end to end in the packaged app).
 - [ ] "Block external loads in HTML pages" setting (SPEC decision 3) not built yet; external loads are allowed.
+- 2026-11-06 Pushed to github.com/aman99dex/orbis (private). GPU stays on (decision 7). First CI run: tests failed on Linux — `..\x` accepted because `\` isn't a separator there; Resolve now treats `\` as a separator everywhere; CI tests now run on Linux + Windows. Agentic Memory local mode: Orbis calls the `agentic-memory` CLI; verified with the real AM code on a throwaway AGENTIC_MEMORY_HOME (2 turns → 3 facts via Haiku), real `claude -p` → `orbis_recall` returned user + project facts; app Memory view shows briefing + recall (screenshots).
+- 2026-11-06 Aman: "if I am reading a page I can't scroll". Root cause: the app grid had no row height, so the row grew to the content and the reader/card panel never overflowed (screenshots looked fine; my one scripted scroll silently did nothing). Fixed with `grid-template-rows: minmax(0, 1fr)` + `min-height: 0`; confirmed by running the same real-wheel check on the old layout (fails) and the new one (passes). Slides now split at headings when a note has no `---`. `scripts/ui-check.mjs`: 14 checks with real mouse/keyboard input; all pass.

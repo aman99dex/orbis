@@ -174,3 +174,4 @@ func (v *Vault) Resolve(rel string) (string, error) {
 6. Added `gopkg.in/yaml.v3` for frontmatter.
 7. **GPU stays on** (2026-11-06, Aman: "I don't care for size, I want it to work well"). WebView2's GPU process costs ~95 MB (total ~260 MB idle at 1k files); turning it off reached 187 MB but forces software WebGL for the orbit graph.
 8. **Personal repo:** `github.com/aman99dex/orbis` (not the neofloai org).
+9. **Agentic Memory works locally** (2026-11-06, Aman): besides `MEMORY_URL`, Orbis runs the `agentic-memory` CLI (PATH or `ORBIS_MEMORY_CMD`) so no server is needed; agents pass their project folder, the app shows a Memory view (briefing + recall).

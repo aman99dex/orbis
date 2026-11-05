@@ -43,7 +43,20 @@ full files only when needed. The writing agent supplies the summary, so Orbis ne
 | `orbis_read` | One file's card + text (PDFs/images: card + absolute path) |
 | `orbis_write` | Create or update a note/page/artifact with its card |
 | `orbis_import` | Copy a PDF, image or any file in with a card |
-| `orbis_recall` | Only when `MEMORY_URL` is set: recall from an [Agentic Memory](../Agentic_Memory) service (`MEMORY_API_KEY`, `MEMORY_USER`) |
+| `orbis_recall` | Recall facts and past sessions from [Agentic Memory](https://github.com/aman99dex/Agentic_Memory), when it's set up (below) |
+
+## Agentic Memory (optional)
+
+Orbis holds your files; Agentic Memory remembers facts and past sessions. With it set up, agents get
+`orbis_recall` and the app gets a **Memory** view (the briefing a new session starts with, plus recall).
+
+- **Local, no server:** install the `agentic-memory` CLI (Orbis finds it on `PATH`), or point Orbis at a
+  checkout: `ORBIS_MEMORY_CMD="uv run --directory C:\path\to\Agentic_Memory agentic-memory"`. Orbis
+  passes the agent's project folder, so project memories come back along with user-wide ones.
+- **Server:** `MEMORY_URL`, `MEMORY_API_KEY`, `MEMORY_USER` → `POST /memories:search` and `/memories:context`.
+
+For the app, set the variable as a user environment variable; for agents, put it in the MCP config
+(`claude mcp add orbis -e ORBIS_MEMORY_CMD=... -- orbis.exe mcp`).
 
 ## The app
 

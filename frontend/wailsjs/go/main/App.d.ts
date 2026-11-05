@@ -20,11 +20,17 @@ export function Import():Promise<Array<string>>;
 
 export function ImportZip():Promise<portable.Result>;
 
+export function MemoryContext():Promise<string>;
+
+export function MemoryMode():Promise<string>;
+
 export function Neighbors(arg1:string,arg2:number):Promise<main.Hood>;
 
 export function Open(arg1:string):Promise<main.Doc>;
 
 export function OpenExternal(arg1:string):Promise<void>;
+
+export function Recall(arg1:string):Promise<string>;
 
 export function Root():Promise<string>;
 

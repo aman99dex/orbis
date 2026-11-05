@@ -34,6 +34,14 @@ export function ImportZip() {
   return window['go']['main']['App']['ImportZip']();
 }
 
+export function MemoryContext() {
+  return window['go']['main']['App']['MemoryContext']();
+}
+
+export function MemoryMode() {
+  return window['go']['main']['App']['MemoryMode']();
+}
+
 export function Neighbors(arg1, arg2) {
   return window['go']['main']['App']['Neighbors'](arg1, arg2);
 }
@@ -44,6 +52,10 @@ export function Open(arg1) {
 
 export function OpenExternal(arg1) {
   return window['go']['main']['App']['OpenExternal'](arg1);
+}
+
+export function Recall(arg1) {
+  return window['go']['main']['App']['Recall'](arg1);
 }
 
 export function Root() {
